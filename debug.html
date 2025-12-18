@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JavaScript 诊断</title>
+</head>
+<body>
+    <h1>JavaScript 功能测试</h1>
+    
+    <button onclick="alert('内联onclick测试')">测试1：内联onclick</button>
+    <button id="test2">测试2：addEventListener</button>
+    <button onclick="testFunction()">测试3：函数调用</button>
+    
+    <div id="output" style="margin-top:20px; padding:10px; background:#f0f0f0;"></div>
+    
+    <script>
+        // 测试 addEventListener
+        document.getElementById('test2').addEventListener('click', function() {
+            alert('addEventListener 正常工作');
+        });
+        
+        // 测试函数调用
+        function testFunction() {
+            alert('JavaScript 函数调用正常');
+        }
+        
+        // 基础测试
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('output').innerHTML += '<p>✅ DOM加载完成</p>';
+            console.log('Debug page: DOM loaded');
+        });
+        
+        // 测试是否能访问外部文件
+        try {
+            // 测试 data.js 是否加载
+            if (typeof dataManager !== 'undefined') {
+                document.getElementById('output').innerHTML += '<p>✅ data.js 已加载</p>';
+            }
+        } catch (e) {
+            document.getElementById('output').innerHTML += '<p>❌ data.js 未加载: ' + e.message + '</p>';
+        }
+        
+        console.log('=== 诊断信息 ===');
+        console.log('浏览器:', navigator.userAgent);
+        console.log('页面URL:', window.location.href);
+    </script>
+</body>
+</html>
