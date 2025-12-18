@@ -238,20 +238,31 @@
         </div>
     </div>
 
-    <!-- 脚本引用 -->
+     <!-- 脚本引用 -->
     <script src="data.js"></script>
     <script src="game.js"></script>
     <script>
         // 初始化
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('主页面初始化...');
+            
             // 初始化数据
             if (typeof dataManager !== 'undefined') {
                 dataManager.init();
+                console.log('数据管理器初始化成功');
+            } else {
+                console.error('data.js 未加载成功');
             }
             
-            // 初始化游戏
+            // 初始化游戏引擎
             if (typeof wordGame !== 'undefined') {
-                wordGame.init();
+                wordGame.init().then(() => {
+                    console.log('游戏引擎初始化成功');
+                }).catch(error => {
+                    console.error('游戏引擎初始化失败:', error);
+                });
+            } else {
+                console.error('game.js 未加载成功');
             }
             
             // 更新界面
@@ -267,12 +278,17 @@
             updateBankInfo();
         }
 
-        // 更新进度
+        // 更新进度 - 修复获取 progress.percentage 的问题
         function updateProgress() {
             const progress = dataManager.getProgress();
+            
+            // 计算百分比
+            const percentage = progress.total > 0 ? 
+                ((progress.studied / progress.total) * 100).toFixed(1) : 0;
+            
             document.getElementById('progressText').textContent = 
-                `${progress.studied}/${progress.total} (${progress.percentage}%)`;
-            document.getElementById('progressFill').style.width = `${progress.percentage}%`;
+                `${progress.studied}/${progress.total} (${percentage}%)`;
+            document.getElementById('progressFill').style.width = `${percentage}%`;
             
             document.getElementById('studiedCount').textContent = progress.studied;
             document.getElementById('accuracyRate').textContent = progress.accuracy + '%';
@@ -301,50 +317,114 @@
             updateBankInfo();
         }
 
-        // 游戏功能
+        // ========== 游戏功能（统一调用 game.js 引擎） ==========
+        
+        // 完全随机测试
         function startRandomTest() {
-            wordGame.startRandomTest(20);
+            console.log('开始完全随机测试');
+            
+            if (typeof wordGame !== 'undefined' && wordGame.startRandomTest) {
+                // 调用游戏引擎
+                wordGame.startRandomTest(20);
+            } else {
+                // 备用方案：跳转到游戏页面
+                console.warn('游戏引擎未就绪，使用备用方案');
+                window.location.href = 'game.html?mode=random&count=20';
+            }
         }
 
+        // 自定义练习
         function showCustomPractice() {
             const count = prompt('请输入测试单词数量 (10-100):', '20');
             if (count && count >= 10 && count <= 100) {
-                wordGame.startRandomTest(parseInt(count));
+                if (typeof wordGame !== 'undefined' && wordGame.startCustomPractice) {
+                    // 调用游戏引擎的自定义练习
+                    const settings = {
+                        wordCount: parseInt(count),
+                        difficulty: 0, // 0表示所有难度
+                        options: 4,
+                        randomMode: true
+                    };
+                    wordGame.startCustomPractice(settings);
+                } else {
+                    // 备用方案
+                    window.location.href = `game.html?mode=custom&count=${count}`;
+                }
             }
         }
 
+        // 复习错题
         function reviewWrongWords() {
-            wordGame.reviewWrongWords();
+            console.log('复习错题');
+            
+            if (typeof wordGame !== 'undefined' && wordGame.reviewWrongWords) {
+                wordGame.reviewWrongWords();
+            } else {
+                // 备用方案
+                if (confirm('确定要复习错题吗？')) {
+                    window.location.href = 'game.html?mode=review';
+                }
+            }
         }
 
+        // 单元复习
         function reviewByUnit() {
             const unit = prompt('请输入单元编号 (1-10):', '1');
             if (unit && unit >= 1 && unit <= 10) {
-                wordGame.reviewByUnit(parseInt(unit));
+                if (typeof wordGame !== 'undefined' && wordGame.reviewByUnit) {
+                    wordGame.reviewByUnit(parseInt(unit));
+                } else {
+                    // 备用方案
+                    window.location.href = `game.html?mode=unit&unit=${unit}`;
+                }
             }
         }
 
+        // 显示记录
         function showRecords() {
-            wordGame.showRecords();
+            if (typeof wordGame !== 'undefined' && wordGame.showRecords) {
+                wordGame.showRecords();
+            } else {
+                alert('游戏记录功能将在完整版中实现！\n当前显示示例记录。');
+            }
         }
 
+        // 显示统计
         function showStatistics() {
-            wordGame.showStatistics();
+            if (typeof wordGame !== 'undefined' && wordGame.showStatistics) {
+                wordGame.showStatistics();
+            } else {
+                alert('学习统计功能将在完整版中实现！');
+            }
         }
 
+        // 显示单词统计
         function showWordStats() {
-            wordGame.showWordStats();
+            if (typeof wordGame !== 'undefined' && wordGame.showWordStats) {
+                wordGame.showWordStats();
+            } else {
+                alert('单词统计功能将在完整版中实现！');
+            }
         }
 
+        // 词库管理
         function manageWordBanks() {
             window.open('converter.html', '_blank');
         }
 
+        // 快速测试
         function startQuickTest() {
-            wordGame.startRandomTest(10);
+            console.log('开始快速测试');
+            
+            if (typeof wordGame !== 'undefined' && wordGame.startRandomTest) {
+                wordGame.startRandomTest(10);
+            } else {
+                window.location.href = 'game.html?mode=quick&count=10';
+            }
         }
 
-        // 设置相关
+        // ========== 设置相关（保持不变） ==========
+        
         function showSettings() {
             document.getElementById('settingsModal').style.display = 'block';
             loadSettings();
@@ -401,6 +481,14 @@
                 }
             }
         }
+        
+        // ========== 全局错误处理 ==========
+        window.addEventListener('error', function(event) {
+            console.error('页面发生错误:', event.error);
+        });
+
     </script>
 </body>
 </html>
+
+
