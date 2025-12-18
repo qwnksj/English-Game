@@ -1,710 +1,598 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>单词测试 - 英语单词记忆游戏</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* 游戏页面专用样式 */
-        .game-container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+// game.js - 英语单词记忆游戏核心逻辑
 
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-            color: white;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-
-        .game-title {
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-
-        .game-stats {
-            display: flex;
-            gap: 20px;
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: block;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .word-display {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            text-align: center;
-            margin: 20px 0;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .word-english {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #2c3e50;
-            margin-bottom: 30px;
-            min-height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .word-meaning {
-            font-size: 1.5rem;
-            color: #7f8c8d;
-            margin-bottom: 20px;
-        }
-
-        .options-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 30px 0;
-        }
-
-        @media (max-width: 768px) {
-            .options-grid {
-                grid-template-columns: 1fr;
-            }
-            .word-english {
-                font-size: 2.5rem;
-            }
-        }
-
-        .option-btn {
-            padding: 25px 20px;
-            background: white;
-            border: 3px solid #ecf0f1;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: center;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .option-btn:hover {
-            border-color: #3498db;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.2);
-        }
-
-        .option-btn.correct {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border-color: #27ae60;
-            color: #155724;
-            animation: pulse 0.5s ease;
-        }
-
-        .option-btn.wrong {
-            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
-            border-color: #e74c3c;
-            color: #721c24;
-            animation: shake 0.5s ease;
-        }
-
-        .game-controls {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .feedback-message {
-            text-align: center;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 10px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .feedback-correct {
-            background: #d4edda;
-            color: #155724;
-            border: 2px solid #c3e6cb;
-        }
-
-        .feedback-wrong {
-            background: #f8d7da;
-            color: #721c24;
-            border: 2px solid #f5c6cb;
-        }
-
-        .progress-bar-container {
-            margin: 20px 0;
-            background: #ecf0f1;
-            border-radius: 10px;
-            height: 10px;
-            overflow: hidden;
-        }
-
-        .progress-bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #3498db 0%, #2ecc71 100%);
-            width: 0%;
-            transition: width 0.5s ease;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .result-screen {
-            text-align: center;
-            padding: 40px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-top: 20px;
-        }
-
-        .result-score {
-            font-size: 3rem;
-            font-weight: bold;
-            color: #3498db;
-            margin: 20px 0;
-        }
-
-        .result-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin: 30px 0;
-        }
-
-        .result-stat {
-            text-align: center;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-
-        .result-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #2c3e50;
-            display: block;
-        }
-
-        .result-label {
-            color: #7f8c8d;
-            margin-top: 5px;
-            display: block;
-        }
-    </style>
-</head>
-<body>
-    <div class="game-container">
-        <!-- 游戏头部 -->
-        <div class="game-header">
-            <div class="game-title">
-                <i class="fas fa-brain"></i> 单词测试模式
-            </div>
-            <div class="game-stats">
-                <div class="stat-item">
-                    <span class="stat-value" id="currentQuestion">1</span>
-                    <span class="stat-label">当前题</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="totalQuestions">10</span>
-                    <span class="stat-label">总题数</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="gameScore">0</span>
-                    <span class="stat-label">得分</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 进度条 -->
-        <div class="progress-bar-container">
-            <div class="progress-bar-fill" id="progressBar"></div>
-        </div>
-
-        <!-- 问题显示区域 -->
-        <div id="questionArea">
-            <div class="word-display">
-                <div class="word-english" id="wordEnglish">Loading...</div>
-                <div class="word-meaning" id="wordHint">请选择正确的中文释义</div>
-                
-                <div class="options-grid" id="optionsGrid">
-                    <!-- 选项将动态生成 -->
-                </div>
-
-                <div id="feedbackArea"></div>
-
-                <div class="game-controls">
-                    <button class="btn btn-warning" onclick="skipQuestion()">
-                        <i class="fas fa-forward"></i> 跳过本题
-                    </button>
-                    <button class="btn btn-secondary" onclick="exitGame()">
-                        <i class="fas fa-sign-out-alt"></i> 退出测试
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- 结果显示区域 (初始隐藏) -->
-        <div id="resultArea" style="display: none;">
-            <div class="result-screen">
-                <h2><i class="fas fa-trophy"></i> 测试完成！</h2>
-                <div class="result-score" id="finalScore">0</div>
-                
-                <div class="result-stats">
-                    <div class="result-stat">
-                        <span class="result-value" id="resultCorrect">0</span>
-                        <span class="result-label">正确题数</span>
-                    </div>
-                    <div class="result-stat">
-                        <span class="result-value" id="resultAccuracy">0%</span>
-                        <span class="result-label">正确率</span>
-                    </div>
-                    <div class="result-stat">
-                        <span class="result-value" id="resultTime">0s</span>
-                        <span class="result-label">用时</span>
-                    </div>
-                </div>
-
-                <div style="margin: 30px 0;">
-                    <div id="resultMessage" style="font-size: 1.2rem; margin-bottom: 20px;">
-                        结果评语加载中...
-                    </div>
-                </div>
-
-                <div class="game-controls">
-                    <button class="btn btn-primary" onclick="restartGame()">
-                        <i class="fas fa-redo"></i> 再测一次
-                    </button>
-                    <button class="btn btn-success" onclick="backToMain()">
-                        <i class="fas fa-home"></i> 返回主页
-                    </button>
-                    <button class="btn btn-info" onclick="reviewWrong()">
-                        <i class="fas fa-redo-alt"></i> 复习错题
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 脚本引用 -->
-    <script src="data.js"></script>
-    <script src="game.js"></script>
-    <script>
-        // 游戏状态
-        let gameState = {
-            currentIndex: 0,
-            totalQuestions: 10,
+class WordGame {
+    constructor() {
+        this.words = [];
+        this.currentBank = 'words.txt';
+        this.gameState = {
+            mode: 'random',      // random, custom, review, unit
             score: 0,
-            correctAnswers: 0,
+            correct: 0,
+            total: 0,
+            currentIndex: 0,
+            selectedIndices: [],
             startTime: null,
-            currentWord: null,
-            currentOptions: [],
-            correctAnswer: '',
-            isAnswered: false,
-            selectedAnswer: null
+            isPlaying: false,
+            options: 4,
+            timeLimit: 0
         };
-
-        // 初始化游戏
-        function initGame() {
-            console.log('游戏页面初始化');
-            
-            // 从URL获取参数
-            const urlParams = new URLSearchParams(window.location.search);
-            const mode = urlParams.get('mode') || 'random';
-            const count = parseInt(urlParams.get('count')) || 10;
-            
-            // 设置游戏参数
-            gameState.totalQuestions = count;
-            gameState.startTime = Date.now();
-            
-            // 更新界面
-            document.getElementById('totalQuestions').textContent = gameState.totalQuestions;
-            updateProgress();
-            
-            // 开始第一题
-            loadQuestion();
-        }
-
-        // 加载问题
-        function loadQuestion() {
-            if (gameState.currentIndex >= gameState.totalQuestions) {
-                endGame();
-                return;
-            }
-            
-            gameState.isAnswered = false;
-            gameState.selectedAnswer = null;
-            
-            // 显示问题区域，隐藏结果区域
-            document.getElementById('questionArea').style.display = 'block';
-            document.getElementById('resultArea').style.display = 'none';
-            
-            // 模拟获取单词数据（实际应该从游戏引擎获取）
-            const sampleWords = [
-                { english: 'abandon', chinese: '放弃' },
-                { english: 'ability', chinese: '能力' },
-                { english: 'about', chinese: '关于' },
-                { english: 'above', chinese: '在...上面' },
-                { english: 'abroad', chinese: '国外' },
-                { english: 'absence', chinese: '缺席' },
-                { english: 'absolute', chinese: '绝对的' },
-                { english: 'absorb', chinese: '吸收' },
-                { english: 'academic', chinese: '学术的' },
-                { english: 'accelerate', chinese: '加速' }
-            ];
-            
-            const sampleMeanings = [
-                '能力', '放弃', '学术的', '加速',
-                '关于', '国外', '缺席', '绝对的',
-                '吸收', '在...上面'
-            ];
-            
-            // 随机选择一个单词
-            const randomIndex = Math.floor(Math.random() * sampleWords.length);
-            gameState.currentWord = sampleWords[randomIndex];
-            gameState.correctAnswer = gameState.currentWord.chinese;
-            
-            // 生成选项（1个正确 + 3个随机错误）
-            gameState.currentOptions = [gameState.correctAnswer];
-            while (gameState.currentOptions.length < 4) {
-                const randomMeaning = sampleMeanings[Math.floor(Math.random() * sampleMeanings.length)];
-                if (!gameState.currentOptions.includes(randomMeaning)) {
-                    gameState.currentOptions.push(randomMeaning);
-                }
-            }
-            
-            // 打乱选项顺序
-            gameState.currentOptions = shuffleArray(gameState.currentOptions);
-            
-            // 更新界面
-            updateQuestionDisplay();
-            updateProgress();
-        }
-
-        // 更新问题显示
-        function updateQuestionDisplay() {
-            // 更新单词和题号
-            document.getElementById('wordEnglish').textContent = gameState.currentWord.english;
-            document.getElementById('currentQuestion').textContent = gameState.currentIndex + 1;
-            document.getElementById('gameScore').textContent = gameState.score;
-            
-            // 清空反馈区域
-            document.getElementById('feedbackArea').innerHTML = '';
-            
-            // 生成选项按钮
-            const optionsGrid = document.getElementById('optionsGrid');
-            optionsGrid.innerHTML = '';
-            
-            const letters = ['A', 'B', 'C', 'D'];
-            gameState.currentOptions.forEach((option, index) => {
-                const button = document.createElement('button');
-                button.className = 'option-btn';
-                button.innerHTML = `<strong>${letters[index]}.</strong> ${option}`;
-                button.onclick = () => selectAnswer(option, button);
-                optionsGrid.appendChild(button);
-            });
-        }
-
-        // 选择答案
-        function selectAnswer(answer, button) {
-            if (gameState.isAnswered) return;
-            
-            gameState.isAnswered = true;
-            gameState.selectedAnswer = answer;
-            
-            const isCorrect = answer === gameState.correctAnswer;
-            
-            // 禁用所有选项按钮
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                btn.disabled = true;
-                btn.style.cursor = 'not-allowed';
-            });
-            
-            // 高亮显示正确答案和错误答案
-            document.querySelectorAll('.option-btn').forEach(btn => {
-                const btnText = btn.textContent.replace(/^[A-D]\.\s*/, '');
-                if (btnText === gameState.correctAnswer) {
-                    btn.classList.add('correct');
-                } else if (btn === button && !isCorrect) {
-                    btn.classList.add('wrong');
-                }
-            });
-            
-            // 显示反馈
-            showFeedback(isCorrect);
-            
-            // 更新分数和计数
-            if (isCorrect) {
-                gameState.score += 10;
-                gameState.correctAnswers++;
-                if (typeof wordGame !== 'undefined') {
-                    wordGame.checkAnswer(answer);
-                }
-            } else {
-                gameState.score = Math.max(0, gameState.score - 3);
-            }
-            
-            // 更新分数显示
-            document.getElementById('gameScore').textContent = gameState.score;
-            
-            // 自动进入下一题
-            setTimeout(() => {
-                gameState.currentIndex++;
-                loadQuestion();
-            }, 1500); // 1.5秒后自动下一题
-        }
-
-        // 显示反馈
-        function showFeedback(isCorrect) {
-            const feedbackArea = document.getElementById('feedbackArea');
-            const message = isCorrect 
-                ? '🎉 回答正确！' 
-                : `😅 回答错误！正确答案是：${gameState.correctAnswer}`;
-            const className = isCorrect ? 'feedback-correct' : 'feedback-wrong';
-            
-            feedbackArea.innerHTML = `
-                <div class="feedback-message ${className}">
-                    ${message}
-                </div>
-            `;
-        }
-
-        // 更新进度
-        function updateProgress() {
-            const progress = ((gameState.currentIndex + 1) / gameState.totalQuestions) * 100;
-            document.getElementById('progressBar').style.width = `${progress}%`;
-        }
-
-        // 跳过本题
-        function skipQuestion() {
-            if (gameState.isAnswered) return;
-            
-            gameState.isAnswered = true;
-            gameState.currentIndex++;
-            
-            // 显示跳过提示
-            const feedbackArea = document.getElementById('feedbackArea');
-            feedbackArea.innerHTML = `
-                <div class="feedback-message" style="background: #f8f9fa; color: #6c757d;">
-                    ⏭️ 已跳过本题
-                </div>
-            `;
-            
-            // 延迟加载下一题
-            setTimeout(() => loadQuestion(), 800);
-        }
-
-        // 结束游戏
-        function endGame() {
-            const timeTaken = Math.floor((Date.now() - gameState.startTime) / 1000);
-            const accuracy = (gameState.correctAnswers / gameState.totalQuestions * 100).toFixed(1);
-            
-            // 隐藏问题区域，显示结果区域
-            document.getElementById('questionArea').style.display = 'none';
-            document.getElementById('resultArea').style.display = 'block';
-            
-            // 更新结果统计
-            document.getElementById('finalScore').textContent = gameState.score;
-            document.getElementById('resultCorrect').textContent = `${gameState.correctAnswers}/${gameState.totalQuestions}`;
-            document.getElementById('resultAccuracy').textContent = `${accuracy}%`;
-            document.getElementById('resultTime').textContent = `${timeTaken}秒`;
-            
-            // 显示评语
-            const messageArea = document.getElementById('resultMessage');
-            let message = '';
-            let emoji = '';
-            
-            if (accuracy >= 90) {
-                message = '🎖️ 优秀！你的单词掌握得非常扎实！';
-                emoji = '🏆';
-            } else if (accuracy >= 80) {
-                message = '🌟 良好！继续保持这个学习状态！';
-                emoji = '⭐';
-            } else if (accuracy >= 70) {
-                message = '📚 中等！再多练习几次会更好！';
-                emoji = '💪';
-            } else if (accuracy >= 60) {
-                message = '✏️ 及格！建议加强薄弱单词的复习！';
-                emoji = '🔍';
-            } else {
-                message = '📖 需要加油！从基础单词开始巩固吧！';
-                emoji = '🚀';
-            }
-            
-            messageArea.innerHTML = `${emoji} ${message}`;
-            
-            // 保存游戏记录
-            if (typeof dataManager !== 'undefined') {
-                const record = {
-                    mode: 'random',
-                    score: gameState.score,
-                    correct: gameState.correctAnswers,
-                    total: gameState.totalQuestions,
-                    accuracy: parseFloat(accuracy),
-                    time: timeTaken,
-                    date: new Date().toLocaleString('zh-CN')
-                };
-                dataManager.saveGameRecord(record);
-            }
-        }
-
-        // 重新开始
-        function restartGame() {
-            gameState = {
-                currentIndex: 0,
-                totalQuestions: 10,
-                score: 0,
-                correctAnswers: 0,
-                startTime: Date.now(),
-                currentWord: null,
-                currentOptions: [],
-                correctAnswer: '',
-                isAnswered: false,
-                selectedAnswer: null
-            };
-            
-            document.getElementById('gameScore').textContent = '0';
-            initGame();
-        }
-
-        // 返回主页
-        function backToMain() {
-            window.location.href = 'index.html';
-        }
-
-        // 复习错题
-        function reviewWrong() {
-            alert('复习错题功能将在完整版中实现！');
-        }
-
-        // 退出游戏
-        function exitGame() {
-            if (confirm('确定要退出测试吗？当前进度将丢失。')) {
-                backToMain();
-            }
-        }
-
-        // 工具函数：打乱数组
-        function shuffleArray(array) {
-            const shuffled = [...array];
-            for (let i = shuffled.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-            }
-            return shuffled;
-        }
-
-        // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', initGame);
         
-     // 导出全局函数供主页面调用
-window.startGameTest = function(mode = 'random', count = 10) {
-    window.location.href = `game.html?mode=${mode}&count=${count}`;
-};
-
-// 完全随机测试
-window.startRandomTest = function(count = 20) {
-    if (!count || count < 5) count = 20;
-    window.location.href = `game.html?mode=random&count=${count}`;
-};
-
-// 自定义练习
-window.showCustomPractice = function() {
-    const count = prompt('请输入测试单词数量 (10-50):', '20');
-    if (count && count >= 10 && count <= 50) {
-        window.location.href = `game.html?mode=custom&count=${count}`;
+        this.dataManager = window.dataManager;
     }
-};
 
-// 复习错题
-window.reviewWrongWords = function() {
-    if (confirm('确定要复习错题吗？')) {
-        window.location.href = 'game.html?mode=review';
+    // 初始化
+    init() {
+        console.log('单词游戏初始化');
+        this.loadCurrentBank();
+        return this;
     }
-};
 
-// 单元复习
-window.reviewByUnit = function() {
-    const unit = prompt('请输入单元编号 (1-10):', '1');
-    if (unit && unit >= 1 && unit <= 10) {
-        window.location.href = `game.html?mode=unit&unit=${unit}`;
+    // 加载当前词库
+    async loadCurrentBank(bankFile = null) {
+        if (bankFile) {
+            this.currentBank = bankFile;
+            this.dataManager.setCurrentBank(bankFile);
+        } else {
+            this.currentBank = this.dataManager.config.currentBank;
+        }
+        
+        try {
+            if (this.currentBank === 'all') {
+                this.words = await this.loadAllBanks();
+            } else {
+                this.words = await this.loadSingleBank(this.currentBank);
+            }
+            
+            console.log(`加载词库成功: ${this.currentBank}, 单词数: ${this.words.length}`);
+            return this.words;
+        } catch (error) {
+            console.error('加载词库失败:', error);
+            this.words = this.getSampleWords();
+            return this.words;
+        }
     }
-};
 
-// 快速测试
-window.startQuickTest = function() {
-    window.location.href = 'game.html?mode=quick&count=10';
-};
-
-// 显示记录
-window.showRecords = function() {
-    alert('游戏记录功能将在完整版中实现！\n当前显示示例记录。');
-    // 这里可以调用 wordGame.showRecords() 如果已实现
-    if (typeof wordGame !== 'undefined' && wordGame.showRecords) {
-        wordGame.showRecords();
+    // 加载单个词库
+    async loadSingleBank(filename) {
+        try {
+            const response = await fetch(filename);
+            if (!response.ok) throw new Error('网络请求失败');
+            
+            const text = await response.text();
+            return this.parseWords(text, filename);
+        } catch (error) {
+            console.warn(`加载词库 ${filename} 失败，使用本地缓存`);
+            return this.getWordsFromStorage(filename);
+        }
     }
-};
 
-// 显示统计
-window.showStatistics = function() {
-    alert('学习统计功能将在完整版中实现！');
-    if (typeof wordGame !== 'undefined' && wordGame.showStatistics) {
-        wordGame.showStatistics();
+    // 加载所有词库
+    async loadAllBanks() {
+        const banks = [
+            'words.txt',
+            'words_basic.txt', 
+            'words_intermediate.txt',
+            'words_advanced.txt',
+            'words_exam.txt',
+            'words_custom.txt'
+        ];
+        
+        let allWords = [];
+        const wordSet = new Set();
+        
+        for (const bank of banks) {
+            try {
+                const words = await this.loadSingleBank(bank);
+                for (const word of words) {
+                    const key = word.english.toLowerCase();
+                    if (!wordSet.has(key)) {
+                        wordSet.add(key);
+                        allWords.push(word);
+                    }
+                }
+            } catch (error) {
+                console.warn(`跳过词库 ${bank}:`, error);
+            }
+        }
+        
+        return allWords;
     }
-};
 
-// 显示单词统计
-window.showWordStats = function() {
-    alert('单词统计功能将在完整版中实现！');
-    if (typeof wordGame !== 'undefined' && wordGame.showWordStats) {
-        wordGame.showWordStats();
+    // 解析单词文本
+    parseWords(text, source) {
+        const words = [];
+        const lines = text.trim().split('\n');
+        
+        lines.forEach((line, index) => {
+            line = line.trim();
+            if (line && line.includes('|') && !line.startsWith('#')) {
+                const [english, chinese] = line.split('|').map(s => s.trim());
+                if (english && chinese) {
+                    const stats = this.dataManager.getWordStat(english);
+                    words.push({
+                        id: words.length,
+                        english: english,
+                        chinese: chinese,
+                        source: source,
+                        studied: stats.studied,
+                        difficulty: stats.difficulty,
+                        wrongTimes: stats.wrongTimes,
+                        correctTimes: stats.correctTimes,
+                        accuracy: stats.accuracy,
+                        lastStudied: stats.lastStudied,
+                        masterLevel: stats.masterLevel,
+                        unit: Math.floor(words.length / 100) + 1  // 每100个单词一个单元
+                    });
+                }
+            }
+        });
+        
+        return words;
     }
-};
-    </script>
-</body>
-</html>
+
+    // 从本地存储获取单词
+    getWordsFromStorage(filename) {
+        // 如果本地存储有数据，使用它
+        const sampleWords = this.getSampleWords();
+        return sampleWords.map(word => {
+            const stats = this.dataManager.getWordStat(word.english);
+            return {
+                ...word,
+                source: filename,
+                studied: stats.studied,
+                difficulty: stats.difficulty,
+                wrongTimes: stats.wrongTimes,
+                correctTimes: stats.correctTimes,
+                accuracy: stats.accuracy,
+                lastStudied: stats.lastStudied,
+                masterLevel: stats.masterLevel,
+                unit: 1
+            };
+        });
+    }
+
+    // 获取示例单词
+    getSampleWords() {
+        return [
+            { english: 'abandon', chinese: '放弃' },
+            { english: 'ability', chinese: '能力' },
+            { english: 'able', chinese: '能够的' },
+            { english: 'about', chinese: '关于' },
+            { english: 'above', chinese: '在...上面' },
+            { english: 'abroad', chinese: '国外' },
+            { english: 'absence', chinese: '缺席' },
+            { english: 'absolute', chinese: '绝对的' },
+            { english: 'absorb', chinese: '吸收' },
+            { english: 'academic', chinese: '学术的' },
+            { english: 'accelerate', chinese: '加速' },
+            { english: 'accept', chinese: '接受' },
+            { english: 'access', chinese: '进入' },
+            { english: 'accident', chinese: '事故' },
+            { english: 'accommodate', chinese: '容纳' },
+            { english: 'accompany', chinese: '陪伴' },
+            { english: 'accomplish', chinese: '完成' },
+            { english: 'according', chinese: '根据' },
+            { english: 'account', chinese: '账户' },
+            { english: 'accurate', chinese: '精确的' }
+        ].map((word, index) => ({
+            ...word,
+            id: index,
+            source: 'sample',
+            studied: false,
+            difficulty: 1,
+            wrongTimes: 0,
+            correctTimes: 0,
+            accuracy: 0,
+            lastStudied: 0,
+            masterLevel: 0,
+            unit: Math.floor(index / 5) + 1
+        }));
+    }
+
+    // 开始随机测试
+    startRandomTest(wordCount = 20) {
+        if (this.words.length === 0) {
+            alert('请先加载词库！');
+            return false;
+        }
+        
+        const count = Math.min(wordCount, this.words.length);
+        const indices = this.getRandomIndices(count);
+        
+        this.gameState = {
+            mode: 'random',
+            score: 0,
+            correct: 0,
+            total: count,
+            currentIndex: 0,
+            selectedIndices: indices,
+            startTime: Date.now(),
+            isPlaying: true,
+            options: 4,
+            timeLimit: 0
+        };
+        
+        this.showQuestion();
+        return true;
+    }
+
+    // 开始自定义练习
+    startCustomPractice(settings) {
+        const { wordCount, difficulty, options, randomMode } = settings;
+        
+        if (this.words.length === 0) {
+            alert('请先加载词库！');
+            return false;
+        }
+        
+        let indices;
+        if (randomMode) {
+            indices = this.getRandomIndices(wordCount);
+        } else {
+            const filtered = this.words
+                .map((word, index) => ({ word, index }))
+                .filter(({ word }) => difficulty === 0 || word.difficulty === difficulty)
+                .map(({ index }) => index);
+            
+            indices = this.getRandomFromArray(filtered, wordCount);
+        }
+        
+        if (indices.length === 0) {
+            alert('没有找到符合条件的单词！');
+            return false;
+        }
+        
+        this.gameState = {
+            mode: 'custom',
+            score: 0,
+            correct: 0,
+            total: indices.length,
+            currentIndex: 0,
+            selectedIndices: indices,
+            startTime: Date.now(),
+            isPlaying: true,
+            options: options || 4,
+            timeLimit: 0
+        };
+        
+        this.showQuestion();
+        return true;
+    }
+
+    // 复习错题
+    reviewWrongWords() {
+        const difficultWords = this.words
+            .map((word, index) => ({ word, index }))
+            .filter(({ word }) => word.studied && word.wrongTimes > word.correctTimes)
+            .map(({ index }) => index);
+        
+        if (difficultWords.length === 0) {
+            alert('暂无需要复习的错题！');
+            return false;
+        }
+        
+        const count = Math.min(20, difficultWords.length);
+        const indices = this.getRandomFromArray(difficultWords, count);
+        
+        this.gameState = {
+            mode: 'review',
+            score: 0,
+            correct: 0,
+            total: indices.length,
+            currentIndex: 0,
+            selectedIndices: indices,
+            startTime: Date.now(),
+            isPlaying: true,
+            options: 4,
+            timeLimit: 0
+        };
+        
+        alert(`发现 ${difficultWords.length} 个错题，开始复习 ${count} 个单词。`);
+        this.showQuestion();
+        return true;
+    }
+
+    // 单元复习
+    reviewByUnit(unit) {
+        const unitWords = this.words
+            .map((word, index) => ({ word, index }))
+            .filter(({ word }) => word.unit === unit)
+            .map(({ index }) => index);
+        
+        if (unitWords.length === 0) {
+            alert(`单元 ${unit} 没有单词！`);
+            return false;
+        }
+        
+        const count = Math.min(20, unitWords.length);
+        const indices = this.getRandomFromArray(unitWords, count);
+        
+        this.gameState = {
+            mode: 'unit',
+            score: 0,
+            correct: 0,
+            total: indices.length,
+            currentIndex: 0,
+            selectedIndices: indices,
+            startTime: Date.now(),
+            isPlaying: true,
+            options: 4,
+            timeLimit: 0
+        };
+        
+        alert(`单元 ${unit} 共有 ${unitWords.length} 个单词，开始复习 ${count} 个单词。`);
+        this.showQuestion();
+        return true;
+    }
+
+    // 显示当前问题
+// 修改前：
+showQuestion() {
+    // ... 原有代码 ...
+    
+    // 显示问题（这里需要与HTML页面配合）
+    this.displayQuestion(word, options);
+}
+
+// 修改后：
+showQuestion() {
+    if (!this.gameState.isPlaying || this.gameState.currentIndex >= this.gameState.total) {
+        this.endGame();
+        return;
+    }
+    
+    const wordIndex = this.gameState.selectedIndices[this.gameState.currentIndex];
+    const word = this.words[wordIndex];
+    
+    // 标记为已学习
+    this.dataManager.updateWordStat(word.english, 'studied');
+    
+    // 获取选项
+    const options = this.generateOptions(word);
+    
+    // 保存当前问题信息
+    this.currentWord = word;
+    this.currentOptions = options;
+    this.currentCorrectAnswer = word.chinese;
+    
+    // 触发页面更新事件
+    if (typeof window.updateQuestion === 'function') {
+        window.updateQuestion(word, options, this.gameState);
+    } else {
+        // 如果游戏页面没有定义 updateQuestion 函数，使用备用方案
+        console.warn('游戏页面未定义 updateQuestion 函数，将跳转到游戏页面');
+        // 这里可以跳转到游戏页面
+        window.location.href = 'game.html?mode=random&count=' + this.gameState.total;
+    }
+}
+
+    // 生成选项
+    generateOptions(correctWord) {
+        const options = [correctWord.chinese];
+        const optionsNeeded = this.gameState.options - 1;
+        
+        // 收集干扰项
+        const otherWords = this.words
+            .filter(w => w.chinese !== correctWord.chinese)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, optionsNeeded)
+            .map(w => w.chinese);
+        
+        // 合并选项并打乱顺序
+        const allOptions = [...options, ...otherWords];
+        return this.shuffleArray(allOptions);
+    }
+
+    // 显示问题（需要与HTML页面配合）
+    displayQuestion(word, options) {
+        // 这里应该更新HTML界面
+        // 实际应用中，这里会操作DOM元素
+        
+        console.log(`问题 ${this.gameState.currentIndex + 1}/${this.gameState.total}: ${word.english}`);
+        console.log('选项:', options);
+        
+        // 保存正确答案位置
+        this.currentCorrectAnswer = word.chinese;
+        this.currentOptions = options;
+        
+        // 触发页面更新事件
+        if (typeof window.updateQuestion === 'function') {
+            window.updateQuestion(word, options, this.gameState);
+        }
+    }
+
+    // 检查答案
+    checkAnswer(selectedAnswer) {
+        const isCorrect = selectedAnswer === this.currentCorrectAnswer;
+        const wordIndex = this.gameState.selectedIndices[this.gameState.currentIndex];
+        const word = this.words[wordIndex];
+        
+        // 更新单词统计
+        if (isCorrect) {
+            this.gameState.score += 5;
+            this.gameState.correct++;
+            this.dataManager.updateWordStat(word.english, 'correct');
+        } else {
+            this.gameState.score = Math.max(0, this.gameState.score - 2);
+            this.dataManager.updateWordStat(word.english, 'wrong');
+        }
+        
+        // 显示结果反馈
+        this.showFeedback(isCorrect, word);
+        
+        // 自动进入下一题
+        const delay = this.dataManager.config.autoDelay * 1000;
+        setTimeout(() => {
+            this.gameState.currentIndex++;
+            this.showQuestion();
+        }, delay);
+        
+        return isCorrect;
+    }
+
+    // 显示反馈
+    showFeedback(isCorrect, word) {
+        const message = isCorrect 
+            ? `✓ 回答正确！${word.english} = ${word.chinese}`
+            : `✗ 回答错误！正确答案是：${word.chinese}`;
+        
+        // 实际应用中这里会更新界面
+        console.log(message);
+        
+        if (typeof window.showFeedback === 'function') {
+            window.showFeedback(message, isCorrect ? 'success' : 'error');
+        }
+    }
+
+    // 结束游戏
+    endGame() {
+        this.gameState.isPlaying = false;
+        const timeTaken = (Date.now() - this.gameState.startTime) / 1000;
+        const accuracy = this.gameState.total > 0 
+            ? (this.gameState.correct / this.gameState.total * 100).toFixed(1)
+            : 0;
+        
+        // 保存游戏记录
+        const record = {
+            mode: this.gameState.mode,
+            wordBank: this.currentBank,
+            score: this.gameState.score,
+            correct: this.gameState.correct,
+            total: this.gameState.total,
+            accuracy: accuracy,
+            time: timeTaken,
+            date: new Date().toLocaleString('zh-CN')
+        };
+        
+        this.dataManager.saveGameRecord(record);
+        
+        // 显示结果
+        this.showResults({
+            score: this.gameState.score,
+            correct: this.gameState.correct,
+            total: this.gameState.total,
+            accuracy: accuracy,
+            time: timeTaken
+        });
+    }
+
+    // 显示结果
+    showResults(results) {
+        console.log('游戏结束，结果:', results);
+        
+        if (typeof window.showGameResults === 'function') {
+            window.showGameResults(results);
+        } else {
+            // 简单显示结果
+            alert(`游戏结束！
+得分: ${results.score}
+正确: ${results.correct}/${results.total}
+正确率: ${results.accuracy}%
+用时: ${results.time.toFixed(1)}秒`);
+        }
+    }
+
+    // 显示学习统计
+    showStatistics() {
+        const progress = this.dataManager.getProgress();
+        const records = this.dataManager.getGameRecords(10);
+        
+        const stats = {
+            totalWords: this.words.length,
+            studiedWords: progress.studied,
+            studyPercentage: ((progress.studied / this.words.length) * 100).toFixed(1),
+            averageAccuracy: progress.accuracy + '%',
+            streakDays: progress.streak,
+            recentRecords: records
+        };
+        
+        console.log('学习统计:', stats);
+        
+        if (typeof window.showStatistics === 'function') {
+            window.showStatistics(stats);
+        } else {
+            alert(`学习统计：
+总单词数: ${stats.totalWords}
+已学习: ${stats.studiedWords} (${stats.studyPercentage}%)
+平均正确率: ${stats.averageAccuracy}
+连续学习天数: ${stats.streakDays}`);
+        }
+    }
+
+    // 显示单词统计
+    showWordStats() {
+        const difficultWords = this.words
+            .filter(w => w.studied)
+            .sort((a, b) => {
+                const aScore = a.wrongTimes - a.correctTimes;
+                const bScore = b.wrongTimes - b.correctTimes;
+                return bScore - aScore;
+            })
+            .slice(0, 10);
+        
+        console.log('最难10个单词:', difficultWords);
+        
+        if (typeof window.showWordStats === 'function') {
+            window.showWordStats(difficultWords);
+        } else {
+            let message = '最难10个单词：\n';
+            difficultWords.forEach((word, index) => {
+                message += `${index + 1}. ${word.english} - 错误${word.wrongTimes}次，正确${word.correctTimes}次\n`;
+            });
+            alert(message);
+        }
+    }
+
+    // 显示游戏记录
+    showRecords() {
+        const records = this.dataManager.getGameRecords(20);
+        
+        console.log('游戏记录:', records);
+        
+        if (typeof window.showRecords === 'function') {
+            window.showRecords(records);
+        } else {
+            let message = '最近20次游戏记录：\n\n';
+            records.forEach((record, index) => {
+                message += `${index + 1}. ${record.date}\n`;
+                message += `   模式: ${record.mode}，得分: ${record.score}\n`;
+                message += `   正确: ${record.correct}/${record.total} (${record.accuracy}%)\n`;
+                message += `   用时: ${record.time.toFixed(1)}秒\n\n`;
+            });
+            alert(message);
+        }
+    }
+
+    // 工具函数
+    getRandomIndices(count) {
+        const indices = Array.from({ length: this.words.length }, (_, i) => i);
+        return this.shuffleArray(indices).slice(0, count);
+    }
+
+    getRandomFromArray(array, count) {
+        const shuffled = this.shuffleArray([...array]);
+        return shuffled.slice(0, Math.min(count, array.length));
+    }
+
+    shuffleArray(array) {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+}
+
+// 创建全局游戏实例
+const wordGame = new WordGame();
+
+// 导出到全局
+window.wordGame = wordGame;
+
+// 辅助函数
+window.startRandomTest = (count = 20) => wordGame.startRandomTest(count);
+window.reviewWrongWords = () => wordGame.reviewWrongWords();
+window.showStatistics = () => wordGame.showStatistics();
+window.showWordStats = () => wordGame.showWordStats();
+window.showRecords = () => wordGame.showRecords();
